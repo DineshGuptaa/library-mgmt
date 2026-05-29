@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
@@ -15,9 +16,10 @@ import { Role } from "../../../common/enum/roles.enum";
 import { CreateMemberDto } from "../dto/create-member.dto";
 import { UpdateMemberDto } from "../dto/update-member.dto";
 import { PaginationQueryDto } from "../../../common/dto/pagination-query.dto";
-import { EsSearchService } from "../../search/services/es-search.service";
 import { EsIndexService } from "../../search/services/es-index.service";
 import { SearchMembersDto } from "../../search/dto/search-members.dto";
+import type { SearchStrategy } from "../../searchdb/providers/search-strategy.provider";
+import { SEARCH_STRATEGY } from "../../searchdb/providers/search-strategy.provider";
 
 const DEFAULT_PASSWORD = "password123";
 
@@ -35,8 +37,9 @@ export class MemberService {
 
     private readonly usersService: UsersService,
     private readonly hashProvider: HashProvider,
-    private readonly esSearchService: EsSearchService,
     private readonly esIndexService: EsIndexService,
+    @Inject(SEARCH_STRATEGY)
+    private readonly searchStrategy: SearchStrategy,
   ) {}
 
   // Auth register ke baad auto-call hoga
@@ -130,14 +133,14 @@ export class MemberService {
 
     const searchDto = paginationQuery as SearchMembersDto;
     if (searchDto.search) {
-      const esResult = await this.esSearchService.searchMembers({
+      const result = await this.searchStrategy.searchMembers({
         search: searchDto.search,
         page,
         limit,
       });
       return {
-        data: esResult.data,
-        meta: esResult.meta,
+        data: result.data,
+        meta: result.meta,
       };
     }
 

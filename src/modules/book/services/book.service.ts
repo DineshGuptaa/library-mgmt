@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -16,8 +17,9 @@ import { UpdateBookDto } from '../dto/update-book.dto';
 import { SearchBooksDto } from '../dto/search-books.dto';
 import { AuthorService } from '../../author/services/author.service';
 import { PaginationProvider } from '../../../common/provider/pagination.provider';
-import { EsSearchService } from '../../search/services/es-search.service';
 import { EsIndexService } from '../../search/services/es-index.service';
+import type { SearchStrategy } from '../../searchdb/providers/search-strategy.provider';
+import { SEARCH_STRATEGY } from '../../searchdb/providers/search-strategy.provider';
 
 @Injectable()
 export class BookService {
@@ -32,8 +34,9 @@ export class BookService {
     private readonly publisherRepository: Repository<Publisher>,
     private readonly authorService: AuthorService,
     private readonly paginationProvider: PaginationProvider,
-    private readonly esSearchService: EsSearchService,
     private readonly esIndexService: EsIndexService,
+    @Inject(SEARCH_STRATEGY)
+    private readonly searchStrategy: SearchStrategy,
   ) {}
 
   async create(createBookDto: CreateBookDto, user: any): Promise<any> {
@@ -122,7 +125,7 @@ export class BookService {
       const limit = paginationQuery.limit ?? 10;
 
       if (paginationQuery.search || paginationQuery.publisherId || paginationQuery.publishYear) {
-        const esResult = await this.esSearchService.searchBooks({
+        const result = await this.searchStrategy.searchBooks({
           search: paginationQuery.search,
           publisherId: paginationQuery.publisherId,
           publishYear: paginationQuery.publishYear,
@@ -131,8 +134,8 @@ export class BookService {
         });
 
         return {
-          data: esResult.data,
-          meta: esResult.meta,
+          data: result.data,
+          meta: result.meta,
         };
       }
 

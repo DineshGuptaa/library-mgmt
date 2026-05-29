@@ -6,12 +6,14 @@ import { User } from '../users/entities/user.entity';
 import { AuthorService } from './services/author.service';
 import { AuthorController } from './author.controller';
 import { PaginationModule } from '../../common/pagination.module';
+import { SearchdbModule } from '../searchdb/searchdb.module';
 import { SearchModule } from '../search/es.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Author, Book, User]),
     PaginationModule,
+    SearchdbModule,
     SearchModule,
   ],
   providers: [AuthorService],

@@ -9,6 +9,7 @@ import { Publisher } from './entities/publisher.entity';
 import { Author } from '../author/entities/author.entity';
 import { AuthorModule } from '../author/author.module';
 import { PaginationModule } from '../../common/pagination.module';
+import { SearchdbModule } from '../searchdb/searchdb.module';
 import { SearchModule } from '../search/es.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { SearchModule } from '../search/es.module';
     TypeOrmModule.forFeature([Book, BookAuthor, BookCategory, Publisher, Author]),
     AuthorModule,
     PaginationModule,
+    SearchdbModule,
     SearchModule,
   ],
   controllers: [BookController],

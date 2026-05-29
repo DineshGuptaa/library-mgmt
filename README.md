@@ -11,7 +11,7 @@ Full-stack library management application with **NestJS 11** (backend), **React 
 | Backend | NestJS 11, TypeScript |
 | ORM | TypeORM 0.3 |
 | Database | PostgreSQL |
-| Search | Elasticsearch 8.17 |
+| Search | Elasticsearch 8.17 **or** PostgreSQL ILIKE (configurable) |
 | Logging | Logstash + Kibana |
 | Auth | JWT (access + refresh tokens), Google OAuth |
 | Email | Nodemailer (SMTP) |
@@ -43,6 +43,7 @@ Copy `.env.development` settings as needed. Key variables:
 | `PORT` | 3001 | Backend port |
 | `DATABASE_*` | — | PostgreSQL connection |
 | `JWT_SECRET` | — | Token signing key |
+| `SEARCH_ENGINE` | `elasticsearch` | Search backend: `elasticsearch` or `database` |
 | `ES_NODE` | `https://localhost:9200` | Elasticsearch URL |
 | `ES_USERNAME` | `elastic` | ES username |
 | `ES_PASSWORD` | `elastic` | ES password |
@@ -187,32 +188,81 @@ All endpoints return a consistent structure:
 
 ---
 
-## Elasticsearch / ELK Stack
+## Search Strategy (Configurable)
+
+The search backend is **pluggable** — switch between Elasticsearch and PostgreSQL via the `SEARCH_ENGINE` env var without changing any code.
 
 ### Architecture
 
 ```
+BookService / AuthorService / MemberService
+          │
+          ▼
+    @Inject(SEARCH_STRATEGY)
+          │
+          ▼
+  SearchStrategy (interface)
+     ▲           ▲
+     │           │
+DatabaseSearch    ElasticsearchSearch
+(ILIKE queries)   (delegates to EsSearchService)
+```
+
+### How it works
+
+- When `?search=` or filters (`publisherId`, `publishYear`) are present → delegates to the configured `SearchStrategy`
+- When only `page`/`limit` params → queries PostgreSQL directly (always uses DB for plain listing)
+- The strategy is selected once at startup based on `SEARCH_ENGINE` env var
+
+### Database Search (ILIKE)
+
+When `SEARCH_ENGINE=database`, search uses PostgreSQL `ILIKE` with wildcards:
+
+| Entity | Fields searched |
+|--------|----------------|
+| Books | `title`, `isbn`, `publisher.name` |
+| Authors | `name`, `bio`, `user.email` |
+| Members | `name`, `user.email`, `phone` |
+
+Also supports exact filters: `publisherId`, `publishYear`.
+
+### Elasticsearch Search
+
+When `SEARCH_ENGINE=elasticsearch` (default), search uses Elasticsearch with `multi_match` + fuzziness `AUTO`:
+
+| Entity | Fields searched (boosted) |
+|--------|--------------------------|
+| Books | `title^3`, `isbn`, `authorName^2`, `publisherName^2`, `categoryName` |
+| Authors | `name^3`, `email^2`, `bio` |
+| Members | `name^3`, `email^2`, `phone`, `address` |
+
+### ELK Stack
+
+```
 App (NestJS)
-  ├── EsIndexService ──► Elasticsearch (9200)    ← search data (books, authors, members)
+  ├── SearchStrategy ──► Elasticsearch (9200)    ← search data (books, authors, members)
+  ├── EsIndexService ──► Elasticsearch (9200)    ← auto-index on create/update/delete
   ├── ElkLogger ───────► Logstash (5000)          ← app logs
   └── Console ─────────► stdout                   ← console output
 
 Kibana (5601) ────────► Elasticsearch              ← visualization
 ```
 
-### Indices (auto-created on startup)
+### Elasticsearch Indices (auto-created on startup)
 
 | Index | Content | Fields |
 |-------|---------|--------|
-| `library_books` | Books | title, isbn, author, publisher, category, publishYear |
-| `library_authors` | Authors | name, email, bio |
-| `library_members` | Members | name, email, phone, address |
+| `library_books` | Books | id, title, isbn, authorId, authorName, categoryId, categoryName, publisherId, publisherName, publishYear, imageUrlS/M/L, createdAt, updatedAt |
+| `library_authors` | Authors | id, name, email, bio, createdAt, updatedAt |
+| `library_members` | Members | id, name, email, phone, address, createdAt, updatedAt |
 
-### Search Behavior
+### Reindex
 
-- When `?search=` param is present → queries Elasticsearch with `multi_match` + fuzziness
-- When only `page`/`limit` params → queries PostgreSQL directly (faster for plain listing)
-- Filters (`publisherId`, `publishYear`) also trigger ES path
+```bash
+# Bulk sync all existing DB data into Elasticsearch
+curl -X POST http://localhost:3001/api/v1/search/reindex \
+  -H "Authorization: Bearer <admin_token>"
+```
 
 ### Log Shipping
 
@@ -370,7 +420,8 @@ Credentials: `true`. Methods: `GET, POST, PUT, PATCH, DELETE, OPTIONS`.
 │       ├── membership-card/       # Card lookup
 │       ├── admin/                 # Admin operations
 │       ├── email/                 # Nodemailer
-│       └── search/                # Elasticsearch module (index, search, reindex)
+│       ├── search/                # Elasticsearch client, index, search, reindex
+│       └── searchdb/              # Pluggable search strategy (ES or DB ILIKE)
 ├── frontend/
 │   └── src/
 │       ├── api/client.ts          # Axios instance

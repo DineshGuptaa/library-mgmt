@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -10,9 +11,10 @@ import { Author } from '../entities/author.entity';
 import { User } from '../../users/entities/user.entity';
 import { UpdateAuthorDto } from '../dto/update-author.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
-import { EsSearchService } from '../../search/services/es-search.service';
 import { EsIndexService } from '../../search/services/es-index.service';
 import { SearchAuthorsDto } from '../../search/dto/search-authors.dto';
+import type { SearchStrategy } from '../../searchdb/providers/search-strategy.provider';
+import { SEARCH_STRATEGY } from '../../searchdb/providers/search-strategy.provider';
 
 @Injectable()
 export class AuthorService {
@@ -23,8 +25,9 @@ export class AuthorService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-    private readonly esSearchService: EsSearchService,
     private readonly esIndexService: EsIndexService,
+    @Inject(SEARCH_STRATEGY)
+    private readonly searchStrategy: SearchStrategy,
   ) {}
 
   async createForUser(user: User): Promise<Author> {
@@ -64,14 +67,14 @@ export class AuthorService {
 
     const searchDto = paginationQuery as SearchAuthorsDto;
     if (searchDto.search) {
-      const esResult = await this.esSearchService.searchAuthors({
+      const result = await this.searchStrategy.searchAuthors({
         search: searchDto.search,
         page,
         limit,
       });
       return {
-        data: esResult.data,
-        meta: esResult.meta,
+        data: result.data,
+        meta: result.meta,
       };
     }
 

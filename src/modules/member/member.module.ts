@@ -9,6 +9,7 @@ import { UsersModule } from "../users/user.module";
 import { HashProvider } from "../auth/providers/hash.provider";
 import { BcryptProvider } from "../auth/providers/bcrypt.provider";
 import { PaginationModule } from "../../common/pagination.module";
+import { SearchdbModule } from "../searchdb/searchdb.module";
 import { SearchModule } from "../search/es.module";
 
 @Module({
@@ -16,6 +17,7 @@ import { SearchModule } from "../search/es.module";
     TypeOrmModule.forFeature([Member, MembershipCard, User]),
     UsersModule,
     PaginationModule,
+    SearchdbModule,
     SearchModule,
   ],
   providers: [
