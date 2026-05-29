@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { AuthProvider } from './context/AuthContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -18,8 +19,11 @@ import AdminBooks from './pages/admin/AdminBooks'
 import AdminMembers from './pages/admin/AdminMembers'
 import AdminAddAuthor from './pages/admin/AdminAddAuthor'
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+
 export default function App() {
   return (
+    <GoogleOAuthProvider clientId={googleClientId}>
     <AuthProvider>
       <Routes>
         <Route element={<Layout />}>
@@ -99,5 +103,6 @@ export default function App() {
         </Route>
       </Routes>
     </AuthProvider>
+    </GoogleOAuthProvider>
   )
 }

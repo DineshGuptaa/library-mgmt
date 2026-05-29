@@ -46,6 +46,10 @@ export const authApi = {
     api.post('/auth/author/register', data),
   loginAdmin: (data: { email: string; password: string }) =>
     api.post('/auth/admin/login', data),
+  registerMemberGoogle: (data: { token: string }) =>
+    api.post('/auth/member/register/google', { token: data.token, role: 'MEMBER' }),
+  registerAuthorGoogle: (data: { token: string }) =>
+    api.post('/auth/author/register/google', { token: data.token, role: 'AUTHOR' }),
   logout: () => api.post('/auth/logout'),
 }
 

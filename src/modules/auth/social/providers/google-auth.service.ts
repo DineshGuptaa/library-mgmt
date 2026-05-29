@@ -27,22 +27,37 @@ export class GoogleAuthService implements OnModuleInit {
 
   async verifyToken(token: string): Promise<GoogleUser> {
     try {
+      if (!token.startsWith('eyJ')) {
+        const response = await fetch(
+          'https://www.googleapis.com/oauth2/v3/userinfo',
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!response.ok) {
+          throw new Error(`Google API error: ${response.statusText}`);
+        }
+        const userInfo = await response.json();
+        if (!userInfo?.email) {
+          throw new UnauthorizedException('Could not extract email from Google token.');
+        }
+        return {
+          googleId: userInfo.sub,
+          email: userInfo.email,
+          name: userInfo.name ?? userInfo.email.split('@')[0],
+        };
+      }
+
       const ticket = await this.oauthClient.verifyIdToken({
         idToken: token,
         audience: this.configService.get<string>('GOOGLE_CLIENT_ID'),
       });
-
       const payload = ticket.getPayload();
-
       if (!payload?.email) {
         throw new UnauthorizedException('Could not extract email from Google token.');
       }
-
       return {
         googleId: payload.sub,
         email: payload.email,
         name: payload.name ?? payload.email.split('@')[0],
-        // picture: payload.picture,        
       };
     } catch (error: any) {
       console.error('Google Token Verification Error:', error.message);
