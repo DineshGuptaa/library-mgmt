@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug TS Directly: Library Service run-acl-batches (CJS + ts-node/register)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register"
+      ],
+      "args": [
+        "${workspaceFolder}/src/main.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "sourceMaps": true,
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "outputCapture": "std",
+      "outFiles": [
+        "${workspaceFolder}/**/*.ts"
+      ]
+    }
+  ]
+}

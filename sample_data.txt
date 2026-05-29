@@ -1,0 +1,62 @@
+Here's the sample data SQL based on the schema:
+-- ============================================
+-- Sample Data for Library Management System
+-- ============================================
+-- Password for all users: password123
+-- (bcrypt hash: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy)
+-- 1. USERS
+INSERT INTO users (email, password, role, isProfileCompleted) VALUES
+('john.doe@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBER', true),
+('jane.smith@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBER', true),
+('bob.wilson@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBER', false),
+('george.rrmartin@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'AUTHOR', true),
+('jk.rowling@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'AUTHOR', true);
+-- 2. MEMBERS (FK -> users.id)
+INSERT INTO members (userId, name, phone, address) VALUES
+(1, 'John Doe', '555-0101', '123 Oak Street, Springfield, IL 62701'),
+(2, 'Jane Smith', '555-0102', '456 Maple Avenue, Portland, OR 97201'),
+(3, 'Bob Wilson', '555-0103', '789 Pine Road, Austin, TX 73301');
+-- 3. AUTHORS (FK -> users.id)
+INSERT INTO authors (userId, name, bio, penName) VALUES
+(4, 'George R.R. Martin', 'Bestselling author of the epic fantasy series A Song of Ice and Fire, which was adapted into the HBO series Game of Thrones.', 'GRRM'),
+(5, 'J.K. Rowling', 'British author best known for writing the Harry Potter fantasy series, which has sold over 500 million copies worldwide.', 'Robert Galbraith');
+-- 4. MEMBERSHIP_CARDS (FK -> members.id)
+INSERT INTO membership_cards (memberId, issueDate, expiryDate) VALUES
+(1, '2024-01-15', '2025-01-15'),
+(2, '2024-03-01', '2025-03-01'),
+(3, '2024-06-20', '2025-06-20');
+-- 5. BOOKS (FK -> authors.id)
+INSERT INTO books (authorId, title, publishedYear) VALUES
+(1, 'A Game of Thrones', 1996),
+(1, 'A Clash of Kings', 1998),
+(1, 'A Storm of Swords', 2000),
+(1, 'A Feast for Crows', 2005),
+(1, 'A Dance with Dragons', 2011),
+(2, 'Harry Potter and the Philosopher''s Stone', 1997),
+(2, 'Harry Potter and the Chamber of Secrets', 1998),
+(2, 'Harry Potter and the Prisoner of Azkaban', 1999),
+(2, 'Harry Potter and the Goblet of Fire', 2000),
+(2, 'Harry Potter and the Order of the Phoenix', 2003),
+(2, 'Harry Potter and the Half-Blood Prince', 2005),
+(2, 'Harry Potter and the Deathly Hallows', 2007);
+-- 6. BORROWINGS (FK -> members.id, books.id)
+INSERT INTO borrowings (memberId, bookId, borrowDate, returnDate) VALUES
+-- John Doe's borrowings (currently has 2 books)
+(1, 1, '2024-11-01', '2024-11-15'),
+(1, 6, '2024-12-01', '2024-12-14'),
+(1, 2, '2025-01-10', NULL),
+(1, 7, '2025-01-15', NULL),
+-- Jane Smith's borrowings (currently has 1 book)
+(2, 3, '2024-10-05', '2024-10-19'),
+(2, 8, '2024-11-20', '2024-12-05'),
+(2, 4, '2025-01-05', NULL),
+-- Bob Wilson's borrowings (returned all)
+(3, 5, '2024-09-01', '2024-09-15'),
+(3, 9, '2024-09-10', '2024-09-25');
+Test accounts (all use password password123):
+Email	Role	Name	Details
+john.doe@email.com	Member	John Doe	Has 2 books currently borrowed
+jane.smith@email.com	Member	Jane Smith	Has 1 book currently borrowed
+bob.wilson@email.com	Member	Bob Wilson	Profile not completed, no active borrowings
+george.rrmartin@email.com	Author	George R.R. Martin	5 books
+jk.rowling@email.com	Author	J.K. Rowling	7 books

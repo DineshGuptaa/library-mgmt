@@ -1,0 +1,48 @@
+### ==========================================
+### AUTH ENDPOINTS
+### ==========================================
+
+### Register as MEMBER
+POST http://localhost:3000/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ali Khan",
+  "email": "ali@example.com",
+  "password": "password123",
+  "role": "MEMBER"
+}
+
+###
+
+### Register as AUTHOR
+POST http://localhost:3000/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Dr. Ahmed",
+  "email": "ahmed@example.com",
+  "password": "password123",
+  "role": "AUTHOR"
+}
+
+###
+
+### Login
+POST http://localhost:3000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "ali@example.com",
+  "password": "password123"
+}
+
+###
+
+### Google OAuth
+POST http://localhost:3000/api/v1/auth/google
+Content-Type: application/json
+
+{
+  "token": "PASTE_GOOGLE_ID_TOKEN_HERE"
+}

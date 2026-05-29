@@ -1,0 +1,6 @@
+POST http://localhost:3000/api/v1/authors
+Content-Type: application/json
+
+{
+ "name": "J.K. Rowling"
+}

@@ -1,0 +1,7 @@
+POST http://localhost:3000/api/v1/borrowings
+Content-Type: application/json
+
+{
+  "memberId": 1,
+  "bookId": 2
+}
