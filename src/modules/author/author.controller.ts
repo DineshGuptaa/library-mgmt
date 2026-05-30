@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, Query } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, Query, Request } from "@nestjs/common";
 import { AuthorService } from "./services/author.service";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 import { Auth } from "../auth/decorators/auth.decorator";
@@ -24,6 +24,15 @@ export class AuthorController {
   async findAll(@Query() paginationQuery: SearchAuthorsDto) {
     const result = await this.authorService.findAll(paginationQuery);
     return { success: true, message: "Authors fetched successfully", ...result };
+  }
+
+  @Get("me")
+  @ApiBearerAuth()
+  @Roles(Role.AUTHOR)
+  @ApiOperation({ summary: "Get current author profile" })
+  async getProfile(@Request() req) {
+    const author = await this.authorService.findByUserId(req.user.sub);
+    return { success: true, message: "Author profile fetched successfully", data: author };
   }
 
   @Get(":id")

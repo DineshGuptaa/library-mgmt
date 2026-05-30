@@ -86,6 +86,63 @@ curl -X POST http://localhost:3001/api/v1/search/reindex \
 
 ---
 
+## Sample Data (CSV Import)
+
+Sample data CSV files are located in `sample_data/`. Import them **in the order below** to respect foreign-key constraints.
+
+### Import Order
+
+| Step | Table | Depends On | File |
+|------|-------|------------|------|
+| 1 | `users` | — | `users_202605302038.csv` |
+| 2 | `book_categories` | — | `book_categories_202605302040.csv` |
+| 3 | `publishers` | — | `publishers_202605302039.csv` |
+| 4 | `authors` | `users.id` | `authors_202605302040.csv` |
+| 5 | `members` | `users.id` | `members_202605302039.csv` |
+| 6 | `books` | `book_categories.id`, `publishers.id`, `authors.id` | `books_202605302040.csv` |
+| 7 | `membership_cards` | `members.id` | `membership_cards_202605302039.csv` |
+| 8 | `book_authors` | `books.id`, `authors.id` | `book_authors_202605302040.csv` |
+| 9 | `borrowings` | `members.id`, `books.id` | `borrowings_202605302040.csv` |
+
+### Using `psql` (recommended)
+
+```bash
+# Replace placeholders with your actual DB name, user, and CSV paths
+DB=library_management
+USER=postgres
+CSV_DIR=sample_data
+
+psql -d $DB -U $USER -c "\copy users FROM '$CSV_DIR/users_202605302038.csv' DELIMITER ',' CSV HEADER;"
+psql -d $DB -U $USER -c "\copy book_categories FROM '$CSV_DIR/book_categories_202605302040.csv' DELIMITER ',' CSV HEADER;"
+psql -d $DB -U $USER -c "\copy publishers FROM '$CSV_DIR/publishers_202605302039.csv' DELIMITER ',' CSV HEADER;"
+psql -d $DB -U $USER -c "\copy authors FROM '$CSV_DIR/authors_202605302040.csv' DELIMITER ',' CSV HEADER;"
+psql -d $DB -U $USER -c "\copy members FROM '$CSV_DIR/members_202605302039.csv' DELIMITER ',' CSV HEADER;"
+psql -d $DB -U $USER -c "\copy books FROM '$CSV_DIR/books_202605302040.csv' DELIMITER ',' CSV HEADER;"
+psql -d $DB -U $USER -c "\copy membership_cards FROM '$CSV_DIR/membership_cards_202605302039.csv' DELIMITER ',' CSV HEADER;"
+psql -d $DB -U $USER -c "\copy book_authors FROM '$CSV_DIR/book_authors_202605302040.csv' DELIMITER ',' CSV HEADER;"
+psql -d $DB -U $USER -c "\copy borrowings FROM '$CSV_DIR/borrowings_202605302040.csv' DELIMITER ',' CSV HEADER;"
+```
+
+### Using pgAdmin
+
+1. Open **pgAdmin** → right-click your database → **Query Tool**
+2. For each table (in the order above), right-click the table → **Import/Export**
+3. Set **Import** → choose the CSV file → **Format: csv** → **Header: Yes** → **Delimiter: `,`**
+4. Click **OK**
+
+### ⚠️ Important Notes
+
+- Always import in the specified order — reversing it causes foreign-key violations.
+- All sample users use password: `password123`.
+- Test accounts:
+  - `john.doe@email.com` (MEMBER) — has 2 books currently borrowed
+  - `jane.smith@email.com` (MEMBER) — has 1 book currently borrowed
+  - `bob.wilson@email.com` (MEMBER) — profile not completed, no active borrowings
+  - `george.rrmartin@email.com` (AUTHOR) — 5 books
+  - `jk.rowling@email.com` (AUTHOR) — 7 books
+
+---
+
 ## API Endpoints
 
 ### Health

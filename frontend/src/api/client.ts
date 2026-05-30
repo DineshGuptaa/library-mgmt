@@ -78,6 +78,7 @@ export const authorsApi = {
   getAll: (params?: { page?: number; limit?: number }) =>
     api.get('/authors', { params }),
   getOne: (id: number) => api.get(`/authors/${id}`),
+  getMyProfile: () => api.get('/authors/me'),
   update: (id: number, data: { name?: string; bio?: string }) =>
     api.patch(`/authors/${id}`, data),
   remove: (id: number) => api.delete(`/authors/${id}`),
@@ -92,7 +93,7 @@ export const publishersApi = {
 }
 
 export const booksApi = {
-  getAll: (params?: { page?: number; limit?: number; search?: string; publisherId?: number; publishYear?: number }) =>
+  getAll: (params?: { page?: number; limit?: number; search?: string; publisherId?: number; publishYear?: number; authorId?: number }) =>
     api.get('/books', { params }),
   getOne: (id: number) => api.get(`/books/${id}`),
   create: (data: {

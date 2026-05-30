@@ -57,6 +57,12 @@ export class DatabaseSearchStrategy implements SearchStrategy {
       });
     }
 
+    if (query.authorId) {
+      qb.andWhere('author.id = :authorId', {
+        authorId: query.authorId,
+      });
+    }
+
     const [data, total] = await qb.getManyAndCount();
     const totalPages = Math.ceil(total / limit);
 

@@ -124,7 +124,7 @@ export class BookService {
       const page = paginationQuery.page ?? 1;
       const limit = paginationQuery.limit ?? 10;
 
-      if (paginationQuery.search || paginationQuery.publisherId || paginationQuery.publishYear) {
+      if (paginationQuery.search || paginationQuery.publisherId || paginationQuery.publishYear || paginationQuery.authorId) {
         const result = await this.searchStrategy.searchBooks({
           search: paginationQuery.search,
           publisherId: paginationQuery.publisherId,
@@ -147,6 +147,12 @@ export class BookService {
         .orderBy('book.createdAt', 'DESC')
         .skip((page - 1) * limit)
         .take(limit);
+
+      if (paginationQuery.authorId) {
+        query.andWhere('author.id = :authorId', {
+          authorId: paginationQuery.authorId,
+        });
+      }
 
       const [data, total] = await query.getManyAndCount();
 
@@ -199,8 +205,14 @@ export class BookService {
     return book;
   }
 
-  async updateBook(id: number, dto: UpdateBookDto): Promise<Book> {
+  async updateBook(id: number, dto: UpdateBookDto, user?: any): Promise<Book> {
     const book = await this.findOne(id);
+    if (user && user.role !== 'ADMIN') {
+      const author = await this.authorService.findByUserId(user.sub);
+      if (!book.author || book.author.id !== author.id) {
+        throw new UnauthorizedException('You can only update your own books');
+      }
+    }
     if (dto.title !== undefined) book.title = dto.title;
     if (dto.isbn !== undefined) book.isbn = dto.isbn;
     if (dto.publishYear !== undefined) book.publishYear = dto.publishYear;
@@ -215,8 +227,14 @@ export class BookService {
     return updated;
   }
 
-  async deleteBook(id: number): Promise<void> {
+  async deleteBook(id: number, user?: any): Promise<void> {
     const book = await this.findOne(id);
+    if (user && user.role !== 'ADMIN') {
+      const author = await this.authorService.findByUserId(user.sub);
+      if (!book.author || book.author.id !== author.id) {
+        throw new UnauthorizedException('You can only delete your own books');
+      }
+    }
     await this.bookRepository.remove(book);
     await this.esIndexService.removeBook(id);
   }

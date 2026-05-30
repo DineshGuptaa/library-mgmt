@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
+import AuthorRoute from './components/AuthorRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -18,6 +19,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminBooks from './pages/admin/AdminBooks'
 import AdminMembers from './pages/admin/AdminMembers'
 import AdminAddAuthor from './pages/admin/AdminAddAuthor'
+import AuthorBooks from './pages/author/AuthorBooks'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
@@ -98,6 +100,14 @@ export default function App() {
               <AdminRoute>
                 <AdminAddAuthor />
               </AdminRoute>
+            }
+          />
+          <Route
+            path="/author/books"
+            element={
+              <AuthorRoute>
+                <AuthorBooks />
+              </AuthorRoute>
             }
           />
         </Route>

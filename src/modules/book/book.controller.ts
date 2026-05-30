@@ -66,19 +66,19 @@ export class BookController {
 
   @Patch('books/:id')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Update book details (ADMIN only)' })
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateBookDto) {
-    const book = await this.bookService.updateBook(id, dto);
+  @Roles(Role.ADMIN, Role.AUTHOR)
+  @ApiOperation({ summary: 'Update book details (ADMIN or Author)' })
+  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateBookDto, @Request() req) {
+    const book = await this.bookService.updateBook(id, dto, req.user);
     return { success: true, message: 'Book updated successfully', data: book };
   }
 
   @Delete('books/:id')
   @ApiBearerAuth()
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Delete a book (ADMIN only)' })
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.bookService.deleteBook(id);
+  @Roles(Role.ADMIN, Role.AUTHOR)
+  @ApiOperation({ summary: 'Delete a book (ADMIN or Author)' })
+  async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    await this.bookService.deleteBook(id, req.user);
     return { success: true, message: 'Book deleted successfully' };
   }
 

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { booksApi, borrowingsApi, membershipCardsApi, membersApi } from '../api/client'
-import type { Book, MembershipCard, Borrowing } from '../types'
+import { booksApi, borrowingsApi, membershipCardsApi, membersApi, categoriesApi, publishersApi } from '../api/client'
+import SearchableSelect from '../components/SearchableSelect'
+import type { Book, MembershipCard, Borrowing, BookCategory, Publisher } from '../types'
 
 const BORROW_LIMIT = 5
 
@@ -17,6 +18,13 @@ export default function Dashboard() {
   const [newBookTitle, setNewBookTitle] = useState('')
   const [newBookIsbn, setNewBookIsbn] = useState('')
   const [newBookYear, setNewBookYear] = useState('')
+  const [newBookPublisherId, setNewBookPublisherId] = useState('')
+  const [newBookCategoryId, setNewBookCategoryId] = useState('')
+  const [newBookImageUrlS, setNewBookImageUrlS] = useState('')
+  const [newBookImageUrlM, setNewBookImageUrlM] = useState('')
+  const [newBookImageUrlL, setNewBookImageUrlL] = useState('')
+  const [publishers, setPublishers] = useState<Publisher[]>([])
+  const [categories, setCategories] = useState<BookCategory[]>([])
   const [membershipCard, setMembershipCard] = useState<MembershipCard | null>(null)
   const [myBorrowings, setMyBorrowings] = useState<Borrowing[]>([])
   const [memberId, setMemberId] = useState<number | null>(null)
@@ -44,6 +52,11 @@ export default function Dashboard() {
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    categoriesApi.getAll().then((res) => setCategories(res.data.data ?? [])).catch(() => {})
+    publishersApi.getAll().then((res) => setPublishers(res.data.data ?? [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -142,11 +155,21 @@ export default function Dashboard() {
         title: newBookTitle,
         isbn: newBookIsbn,
         publishYear: newBookYear ? parseInt(newBookYear) : undefined,
+        publisherId: newBookPublisherId ? parseInt(newBookPublisherId) : undefined,
+        categoryId: newBookCategoryId ? parseInt(newBookCategoryId) : undefined,
+        imageUrlS: newBookImageUrlS || undefined,
+        imageUrlM: newBookImageUrlM || undefined,
+        imageUrlL: newBookImageUrlL || undefined,
       })
-      setBooks((prev) => [res.data.data, ...prev])
+      setBooks((prev) => [res.data, ...prev])
       setNewBookTitle('')
       setNewBookIsbn('')
       setNewBookYear('')
+      setNewBookPublisherId('')
+      setNewBookCategoryId('')
+      setNewBookImageUrlS('')
+      setNewBookImageUrlM('')
+      setNewBookImageUrlL('')
       setSuccess('Book added successfully!')
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to add book')
@@ -324,10 +347,36 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Add a New Book</h2>
-              <form onSubmit={handleAddBook} className="space-y-4">
-                <input type="text" required placeholder="Book title" value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
-                <input type="text" required placeholder="ISBN" value={newBookIsbn} onChange={(e) => setNewBookIsbn(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              <form onSubmit={handleAddBook} className="space-y-5">
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <input type="text" required placeholder="Book title" value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                  <input type="text" required placeholder="ISBN" value={newBookIsbn} onChange={(e) => setNewBookIsbn(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <SearchableSelect
+                    label="Publisher"
+                    placeholder="Type to search publisher..."
+                    options={publishers.map((p) => ({ id: p.id, label: p.name }))}
+                    value={newBookPublisherId}
+                    onChange={(v) => setNewBookPublisherId(v)}
+                  />
+                  <SearchableSelect
+                    label="Category"
+                    placeholder="Type to search category..."
+                    options={categories.map((c) => ({ id: c.id, label: c.name }))}
+                    value={newBookCategoryId}
+                    onChange={(v) => setNewBookCategoryId(v)}
+                  />
+                </div>
                 <input type="number" placeholder="Published year (optional)" value={newBookYear} onChange={(e) => setNewBookYear(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URLs</label>
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    <input type="url" placeholder="Small image URL" value={newBookImageUrlS} onChange={(e) => setNewBookImageUrlS(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm" />
+                    <input type="url" placeholder="Medium image URL" value={newBookImageUrlM} onChange={(e) => setNewBookImageUrlM(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm" />
+                    <input type="url" placeholder="Large image URL" value={newBookImageUrlL} onChange={(e) => setNewBookImageUrlL(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm" />
+                  </div>
+                </div>
                 <button type="submit" className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors">Add Book</button>
               </form>
             </div>
@@ -338,7 +387,18 @@ export default function Dashboard() {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             {isAuthor ? 'My Books' : 'Available Books'}
           </h2>
-          {books.length === 0 ? (
+          {isAuthor ? (
+            <Link
+              to="/author/books"
+              className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors group"
+            >
+              <div>
+                <p className="text-sm font-medium text-indigo-700 group-hover:text-indigo-800">Manage Your Books</p>
+                <p className="text-xs text-indigo-500 mt-0.5">View, edit, and delete your books with pagination</p>
+              </div>
+              <span className="text-indigo-600 text-lg group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </Link>
+          ) : books.length === 0 ? (
             <p className="text-gray-400 text-sm">No books yet.</p>
           ) : (
             <ul className="space-y-3">

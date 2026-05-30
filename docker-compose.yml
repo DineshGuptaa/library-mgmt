@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
@@ -5,24 +7,28 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=true
-      - ELASTIC_PASSWORD=${ES_PASSWORD:-elastic}
+      - xpack.security.http.ssl.enabled=false   # 👈 Explicitly forces HTTP for APIs
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - "9200:9200"
       - "9300:9300"
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.14
+      elk:
     volumes:
       - ./es_data:/usr/share/elasticsearch/data
-    networks:
-      - elk
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.17.0
     container_name: library-kibana
     environment:
-      - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
-      - ELASTICSEARCH_USERNAME=${ES_USERNAME:-elastic}
-      - ELASTICSEARCH_PASSWORD=${ES_PASSWORD:-elastic}
-      - ELASTICSEARCH_SSL_VERIFICATIONMODE=none
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=true
+      - ELASTICSEARCH_USERNAME=kibana_system                # 👈 Explicitly use the system user
+      - ELASTICSEARCH_PASSWORD=Et6sjn6WvMiSP2AxNR7D        # 👈 Use the password from your generated log
+      - XPACK_SECURITY_ENCRYPTIONKEY=d3f7b9a2e6c4f1a8e0b2c5d7e9f1a3b5
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=8c4f2a1b9e0d3f7a5b6c2d8e1f0a4b9c
     ports:
       - "5601:5601"
     depends_on:
@@ -35,7 +41,6 @@ services:
     container_name: library-logstash
     environment:
       - LS_JAVA_OPTS=-Xms256m -Xmx256m
-      - xpack.monitoring.enabled=false
     ports:
       - "5000:5000/tcp"
       - "5000:5000/udp"
@@ -46,6 +51,106 @@ services:
     networks:
       - elk
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq_container
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "5552:5552"
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.13
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: >
+      sh -c "rabbitmq-plugins enable --offline rabbitmq_stream && rabbitmq-server"
+
+  postgres-db:
+    image: postgres:18
+    container_name: postgres_container
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.10
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'jobhunt'
+    volumes:
+      - /srv/docker-data/postgresql:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+
+  mariadb-db:
+    image: mariadb:latest
+    container_name: mariadb_container
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.11
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: mariadb_db
+    volumes:
+      - /srv/docker-data//mariadb/data:/var/lib/mysql/data
+    ports:
+      - "3306:3306"
+
+  nginx-server:
+    image: nginx:latest
+    container_name: nginx_container
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.12
+
+  mongo-express-atlas:
+    image: mongo-express:1.0.2
+    container_name: mongo-express-atlas
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_SSL=true
+    # 2. Skip validation of the server certificate (required for older drivers with Atlas)
+      - ME_CONFIG_MONGODB_SSL_VALIDATE=false
+    # 3. The working Solution 1 connection string
+      - ME_CONFIG_MONGODB_URL=mongodb://sodexoBot:sodexoBot@ac-6uruyde-shard-00-00.65rk9ma.mongodb.net:27017/sodexoBot?ssl=true&authSource=admin&retryWrites=false
+    # 4. Web GUI Login (Fixed and Added missing closing quote)
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+
+
+    #Changed password for user apm_system
+    #PASSWORD apm_system = FV3ArjCzw8SfIxbDSuWc
+    #
+    #Changed password for user kibana_system
+    #PASSWORD kibana_system = Et6sjn6WvMiSP2AxNR7D
+    #
+    #Changed password for user kibana
+    #PASSWORD kibana = Et6sjn6WvMiSP2AxNR7D
+    #
+    #Changed password for user logstash_system
+    #PASSWORD logstash_system = VZu2KHC8eOwuglqUHsNz
+    #
+    #Changed password for user beats_system
+    #PASSWORD beats_system = BDsWNrLO3jbRgWTCcmv2
+    #
+    #Changed password for user remote_monitoring_user
+    #PASSWORD remote_monitoring_user = OxmQesfgmxcFIBDluwwG
+    #
+    #Changed password for user elastic
+    #PASSWORD elastic = dHPzk3Lc8I52hPQzWv45
+
 networks:
+  backend_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
   elk:
     driver: bridge

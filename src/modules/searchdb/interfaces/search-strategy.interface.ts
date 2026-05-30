@@ -12,6 +12,7 @@ export interface BookSearchQuery {
   search?: string;
   publisherId?: number;
   publishYear?: number;
+  authorId?: number;
   page: number;
   limit: number;
 }

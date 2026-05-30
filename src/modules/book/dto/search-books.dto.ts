@@ -17,4 +17,9 @@ export class SearchBooksDto extends PaginationQueryDto {
   @IsNumber()
   @IsOptional()
   publishYear?: number;
+
+  @ApiPropertyOptional({ description: "Filter by author ID" })
+  @IsNumber()
+  @IsOptional()
+  authorId?: number;
 }

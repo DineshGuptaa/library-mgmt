@@ -1,0 +1,9 @@
+"id","name","parent_id","description","created_at"
+1,Fiction,,Fictional literature and stories,2026-05-25 22:01:21.555 +0530
+2,Science & Tech,,"Science, engineering, and technology",2026-05-25 22:01:21.555 +0530
+3,Computers,2,"Programming, software, and hardware",2026-05-25 22:01:21.555 +0530
+4,History,,Historical events and biographies,2026-05-25 22:01:21.555 +0530
+5,Mystery & Thriller,1,Suspense and mystery novels,2026-05-25 22:01:21.555 +0530
+6,Poetry,,Poetic works,2026-05-25 22:01:21.555 +0530
+7,Philosophy,,Philosophical texts and essays,2026-05-25 22:01:21.555 +0530
+8,General Literature,,General reading and miscellaneous,2026-05-25 22:01:21.555 +0530
